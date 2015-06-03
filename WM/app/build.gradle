@@ -1,0 +1,114 @@
+apply plugin: 'com.android.application'
+
+//--------------AndroidAnnonation的配置开始---------------------/
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        // replace with the current version of the Android plugin
+        classpath 'com.android.tools.build:gradle:1.2.2'
+        // the latest version of the android-apt plugin
+        classpath 'com.neenbedankt.gradle.plugins:android-apt:1.4'
+    }
+}
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+}
+
+apply plugin: 'com.android.application'
+apply plugin: 'android-apt'
+def AAVersion = '3.3.1' // change this to your desired version, for example the latest stable: 3.3.1
+
+dependencies {
+    apt "org.androidannotations:androidannotations:$AAVersion"
+    compile "org.androidannotations:androidannotations-api:$AAVersion"
+}
+
+apt {
+    arguments {
+        androidManifestFile variant.outputs[0].processResources.manifestFile
+        // if you have multiple outputs (when using splits), you may want to have other index than 0
+
+        // If you're using flavors you should use the following line instead of hard-coded packageName
+        // resourcePackageName android.defaultConfig.packageName
+
+        // You can set optional annotation processing options here, like these commented options:
+        // logLevel 'INFO'
+        // logFile '/var/log/aa.log'
+    }
+}
+//-------------- AndroidAnnonation的配置结束----------------
+
+android {
+    compileSdkVersion 21
+    buildToolsVersion "21.1.1"
+
+    defaultConfig {
+        applicationId "com.wm"
+        minSdkVersion 14
+        targetSdkVersion 21
+        versionCode 1
+        versionName "1.0"
+
+        // dex突破65535的限制
+        multiDexEnabled true
+        // 默认是umeng的渠道
+        manifestPlaceholders = [UMENG_CHANNEL_VALUE: "umeng"]
+    }
+
+    lintOptions {
+        abortOnError false
+    }
+
+    // FIXME
+    signingConfigs {
+        debug {
+            // No debug config
+        }
+
+        release {
+//            keyAlias 'wm'
+//            keyPassword 'android'
+//            storeFile file('D:/wm/studio_workspace/wm/WM/dist/wm.jks')
+//            storePassword 'android'
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    // 友盟多渠道打包
+    productFlavors {
+        tencent {}
+        taobao {}
+    }
+
+    productFlavors.all { flavor ->
+        flavor.manifestPlaceholders = [UMENG_CHANNEL_VALUE: name]
+    }
+
+}
+
+// 配置lib项目的路径
+//repositories {
+//    flatDir {
+//        dirs 'libs' //this way we can find the .aar file in libs folder
+//    }
+//}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile 'com.android.support:appcompat-v7:21.0.3'
+    compile 'com.android.support:support-v4:21+'
+    //测试gradle
+    //    compile 'de.greenrobot:eventbus:2.4.0' //测试libs下的jar
+    //    compile(name:'wmlibrary-debug', ext:'aar') //测试引用lib项目
+    compile project(':WMLibrary')
+}
